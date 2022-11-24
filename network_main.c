@@ -156,7 +156,6 @@ int main()
 
 	static struct tcp_socket_init_param socket_param;
 
-#ifdef ADUCM_PLATFORM
 	static struct wifi_desc *wifi;
 	struct wifi_init_param wifi_param = {
 		.irq_desc = irq_desc,
@@ -177,7 +176,6 @@ int main()
 	printf("Tinyiiod ip is: %s\n", buff);
 
 	wifi_get_network_interface(wifi, &socket_param.net);
-#endif
 
 	socket_param.max_buff_size = 0;
 
