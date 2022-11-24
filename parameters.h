@@ -1,8 +1,8 @@
 /***************************************************************************//**
  *   @file   parameters.h
- *   @brief  Definitions specific to aducm3029 platform used by iio_demo
+ *   @brief  Definitions specific to Maxim platform used by eval-adxl355-pmdz
  *           project.
- *   @author RBolboac (ramona.bolboaca@analog.com)
+ *   @author Ciprian Regus (ciprian.regus@analog.com)
 ********************************************************************************
  * Copyright 2022(c) Analog Devices, Inc.
  *
@@ -43,20 +43,81 @@
 /******************************************************************************/
 /***************************** Include Files **********************************/
 /******************************************************************************/
-/******************************************************************************/
-#include <sys/platform.h>
-#include "adi_initialize.h"
-#include <drivers/pwr/adi_pwr.h>
-#include "aducm3029_irq.h"
-#include "common_data.h"
-#include "no_os_util.h"
+#include "maxim_irq.h"
+#include "maxim_spi.h"
+#include "maxim_gpio.h"
+#include "maxim_uart.h"
+#include "maxim_stdio.h"
 
 /******************************************************************************/
 /********************** Macros and Constants Definitions **********************/
 /******************************************************************************/
-#define UART_DEVICE_ID	0
+
+#ifdef IIO_SUPPORT
+#define INTC_DEVICE_ID  0
+#define UART_IRQ_ID     UART0_IRQn
+#endif
+
+#define UART_DEVICE_ID  0
+#define UART_BAUDRATE   57600
+#define UART_EXTRA      &adxl355_uart_extra_ip
+
+#if (TARGET_NUM == 78000)
+#define SPI_DEVICE_ID   1
+#define SPI_CS          1
+#else
+#define SPI_DEVICE_ID   0
+#define SPI_CS          0
+#endif
+
+#define SPI_BAUDRATE    1000000
+#define SPI_OPS         &max_spi_ops
+#define SPI_EXTRA       &adxl355_spi_extra_ip
+
+extern struct max_uart_init_param adxl355_uart_extra_ip;
+extern struct max_spi_init_param adxl355_spi_extra_ip;
+
+#ifdef IIO_TRIGGER_EXAMPLE
+#define GPIO_OPS            &max_gpio_ops
+
+#if (TARGET_NUM == 78000)
+#define GPIO_DRDY_PIN_NUM   19
+#define GPIO_DRDY_PORT_NUM  0
+/* Setting for Port1 Pin9 used for DATA_READY.
+Has to be adapted accordingly if another pin is used.
+*/
+#define NVIC_GPIO_IRQ   GPIO0_IRQn
+#define GPIO_IRQ_ID     0
+#elif (TARGET_NUM == 32655)
+#define GPIO_DRDY_PIN_NUM   9
+#define GPIO_DRDY_PORT_NUM  1
+/* Setting for Port1 Pin9 used for DATA_READY.
+Has to be adapted accordingly if another pin is used.
+ */
+#define NVIC_GPIO_IRQ   GPIO1_IRQn
+#define GPIO_IRQ_ID     1
+#else
+#error IIO_TRIGGER_EXAMPLE is currently supported only on max32655 and max 78000 targets.
+#endif
+
+#define GPIO_EXTRA          &adxl355_gpio_extra_ip
+
+extern struct no_os_gpio_init_param adxl355_gpio_drdy_ip;
+
+#define ADXL355_GPIO_TRIG_IRQ_ID GPIO_DRDY_PIN_NUM
+#define ADXL355_GPIO_CB_HANDLE   MXC_GPIO_GET_GPIO(GPIO_DRDY_PORT_NUM)
+
+#define GPIO_IRQ_OPS    &max_gpio_irq_ops
+#define GPIO_IRQ_EXTRA  &adxl355_gpio_extra_ip
+
+extern struct max_gpio_init_param adxl355_gpio_extra_ip;
+#endif
+
+/********************** Macros and Constants Definitions **********************/
+/******************************************************************************/
+#define UART_DEVICE_ID	2
 #define INTC_DEVICE_ID	0
-#define UART_IRQ_ID		ADUCM_UART_INT_ID
+#define UART_IRQ_ID		UART2_IRQn
 #define UART_BAUDRATE	115200
 
 #define WIFI_SSID	"AnalogDevices_5GHz"
@@ -67,19 +128,14 @@
 #define TIMER_ID		1
 #define MQTT_CONFIG_CMD_TIMEOUT	20000
 #define MQTT_PUBLISH_TOPIC	"adxl"
-#define MQTT_SUBSCRIBE_TOPIC	"aducm3029_messages"
+#define MQTT_SUBSCRIBE_TOPIC	"maxim_messages"
 #define MQTT_CONFIG_CMD_TIMEOUT	20000
 #define MQTT_CONFIG_VERSION	MQTT_VERSION_3_1
 #define MQTT_CONFIG_KEEP_ALIVE	7200
-#define MQTT_CONFIG_CLIENT_NAME	"aducm3029-client"
+#define MQTT_CONFIG_CLIENT_NAME	"maxim-client"
 #define MQTT_CONFIG_CLI_USER	NULL
 #define MQTT_CONFIG_CLI_PASS	NULL
 #define SCAN_SENSOR_TIME	500
 #define MQTT_PUBLISH_TOPIC	"adxl"
-
-/* This value can be modified based on the number
-of samples needed to be stored in the device buffer
-and based on the available RAM memory of the platform */
-#define SAMPLES_PER_CHANNEL_PLATFORM 200
 
 #endif /* __PARAMETERS_H__ */

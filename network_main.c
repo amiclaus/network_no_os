@@ -50,9 +50,9 @@
 #include "no_os_timer.h"
 #include "mqtt_client.h"
 
-#include "aducm3029_uart.h"
-#include "aducm3029_irq.h"
-#include "aducm3029_timer.h"
+#include "maxim_uart.h"
+#include "maxim_irq.h"
+#include "maxim_timer.h"
 #include "no_os_irq.h"
 #include "no_os_error.h"
 
@@ -109,23 +109,17 @@ int main()
 {
 	int ret = -EINVAL;
 	int i = 0;
-	if (adi_pwr_Init())
-		return -1;
-
-	if (adi_pwr_SetClockDivider(ADI_CLOCK_HCLK, 1u))
-		return -1;
-
-	if (adi_pwr_SetClockDivider(ADI_CLOCK_PCLK, 1u))
-		return -1;
-	adi_initComponents();
-
 	int status;
-	const struct no_os_irq_platform_ops *platform_irq_ops = &aducm_irq_ops;
+	const struct no_os_irq_platform_ops *platform_irq_ops = &max_irq_ops;
 
 	struct no_os_irq_init_param irq_init_param = {
 		.irq_ctrl_id = INTC_DEVICE_ID,
 		.platform_ops = platform_irq_ops,
 		.extra = NULL
+	};
+
+	struct max_uart_init_param ip = {
+		.flow = UART_FLOW_DIS
 	};
 
 	struct no_os_irq_ctrl_desc *irq_desc;
@@ -138,7 +132,7 @@ int main()
 		return status;
 
 
-	static struct no_os_uart_init_param luart_par = {
+	struct no_os_uart_init_param luart_par = {
 		.device_id = UART_DEVICE_ID,
 		/* TODO: remove this ifdef when asynchrounous rx is implemented on every platform. */
 		.irq_id = UART_IRQ_ID,
@@ -147,6 +141,7 @@ int main()
 		.size = NO_OS_UART_CS_8,
 		.parity = NO_OS_UART_PAR_NO,
 		.stop = NO_OS_UART_STOP_1_BIT,
+		.extra = &ip
 	};
 	struct no_os_uart_desc *uart_desc;
 
@@ -202,7 +197,7 @@ int main()
 	/* Initialize mqtt descriptor */
 	mqtt_init_param = (struct mqtt_init_param) {
 		.timer_id = TIMER_ID,
-		.extra_timer_init_param = &aducm3029_timer_ops,
+		.extra_timer_init_param = &max_timer_ops,
 		.sock = sock,
 		.command_timeout_ms = MQTT_CONFIG_CMD_TIMEOUT,
 		.send_buff = send_buff,
